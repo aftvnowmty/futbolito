@@ -491,10 +491,11 @@ function applyBackground(backgroundId) {
       break;
 
     case 'beer':
-      bgVar = 'var(--beer-bg)';
-      chromeColor = '#6e6e6e';
-      bgPosition = '85% center';
-      break;
+  bgVar = 'var(--beer-bg)';
+  chromeColor = '#6e6e6e';
+  bgPosition = '88% center';
+  document.body.style.backgroundSize = '140%'; //
+  break;
 
     case 'wood':
     default:
