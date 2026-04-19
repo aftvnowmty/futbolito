@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Tablero Táctico | Saleros vs Limones</title>
-  <meta name="description" content="Tablero táctico responsivo con saleros vs limones en formación 1-4-2-3-1." />
+  <meta name="description" content="Tablero táctico responsivo con saleros vs limones y formaciones personalizables." />
   <meta name="theme-color" content="#143824" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -13,23 +13,87 @@
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div class="title-wrap">        
+      <div class="title-wrap">
         <div>
           <h1>SALEROS vs LIMONES</h1>
+          <p>Pizarra táctica móvil</p>
         </div>
+      </div>
+
+      <div class="controls-bar">
+        <button
+          id="configBtn"
+          class="config-btn"
+          type="button"
+          aria-label="Configuración"
+          aria-expanded="false"
+          aria-controls="configMenu"
+        >
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M16 56h32L38 8H26L16 56Z" fill="#ff8a1f" stroke="#ffcc80" stroke-width="2" />
+            <path d="M25 28h14" stroke="#fff2d8" stroke-width="3" stroke-linecap="round" />
+            <path d="M22 40h20" stroke="#fff2d8" stroke-width="3" stroke-linecap="round" />
+            <ellipse cx="32" cy="58" rx="18" ry="4" fill="rgba(0,0,0,.22)" />
+          </svg>
+        </button>
       </div>
     </header>
 
     <main class="main-content">
-      <section class="board-panel">
-        <div id="pitch" class="pitch" aria-label="Cancha táctica de fútbol"></div>
-      </section>
+      <section class="board-scene">
+        <div class="clipboard-scene">
+          <div class="clipboard-base">
+            <div class="clipboard-clip" aria-hidden="true">
+              <div class="clip-ring"></div>
+              <div class="clip-head"></div>
+              <div class="clip-plate"></div>
+              <div class="clip-screw left"></div>
+              <div class="clip-screw right"></div>
+            </div>
 
-      <div class="actions">
-        <button id="resetBtn" class="btn btn-primary" type="button">Reiniciar</button>
-        <button id="flipBtn" class="btn btn-secondary" type="button">Invertir Lados</button>
-      </div>
+            <div class="clipboard-stack">
+              <div class="sheet stack-1 ruled yellow" aria-hidden="true"></div>
+              <div class="sheet stack-2 ruled blue" aria-hidden="true"></div>
+              <div class="sheet stack-3 plain cream" aria-hidden="true"></div>
+              <div class="sheet stack-4 ruled gray" aria-hidden="true"></div>
+
+              <div class="sheet top-sheet">
+                <div id="pitch" class="pitch" aria-label="Cancha táctica de fútbol"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
+  </div>
+
+  <!-- MENÚ FUERA DEL HEADER -->
+  <div id="configMenu" class="config-menu" hidden>
+    <label class="menu-field">
+      <span>Formación Saleros</span>
+      <select id="formationA" aria-label="Formación de saleros"></select>
+    </label>
+
+    <label class="menu-field">
+      <span>Formación Limones</span>
+      <select id="formationB" aria-label="Formación de limones"></select>
+    </label>
+
+<label class="menu-field">
+  <span>Mostrar</span>
+  <select id="visibilityMode" aria-label="Mostrar equipos">
+    <option value="both" selected>Ambos</option>
+    <option value="salt">Solo 🧂</option>
+    <option value="lemon">Solo 🍋‍🟩</option>
+  </select>
+</label>
+
+    <button id="backgroundBtn" class="menu-btn" type="button">
+      Fondo: <span id="backgroundLabel">Mesa de madera</span>
+    </button>
+
+    <button id="flipBtn" class="menu-btn" type="button">Invertir equipos</button>
+    <button id="resetBtn" class="menu-btn" type="button">Reiniciar</button>
   </div>
 
   <script src="js/app.js"></script>
