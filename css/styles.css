@@ -1,29 +1,36 @@
 :root {
   --bg1: #0c1130;
-  --bg2: #0a0f26;
-  --panel: rgba(10, 15, 38, 0.78);
+  --bg2: #08151f;
+  --bg3: #143824;
+  --panel: rgba(10, 15, 38, 0.76);
   --text: #f7fbff;
-  --muted: rgba(247, 251, 255, 0.8);
-  --line: rgba(255,255,255,0.96);
+  --muted: rgba(247, 251, 255, 0.82);
   --shadow: 0 14px 32px rgba(0,0,0,0.34);
   --radius: 22px;
+  --chrome-color: #143824;
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+html, body { margin: 0; padding: 0; min-height: 100%; background: var(--chrome-color); }
+html {
+  background:
+    radial-gradient(circle at 50% 0%, #1d275f 0%, #11223b 24%, #0f2825 58%, #143824 100%);
+}
 body {
   min-height: 100dvh;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at 50% 0%, #1d275f 0%, #0d1235 24%, #090e25 54%, #070b1c 100%);
+    radial-gradient(circle at 50% 0%, #1d275f 0%, #11223b 24%, #0f2825 58%, #143824 100%);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 button { font: inherit; }
 .app-shell {
   width: min(980px, 100%);
   margin: 0 auto;
-  padding: 14px 14px 26px;
+  padding: 14px 14px calc(26px + env(safe-area-inset-bottom));
 }
 
 .topbar {
@@ -76,6 +83,25 @@ button { font: inherit; }
   border-radius: 16px;
   overflow: hidden;
   touch-action: none;
+  isolation: isolate;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  background-color: #215f2d;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08);
+}
+
+.pitch::before,
+.pitch::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Césped en su propia capa para evitar artefactos al mover piezas en iPhone Safari */
+.pitch::before {
+  z-index: 0;
   background-color: #215f2d;
   background-image:
     linear-gradient(180deg,
@@ -91,25 +117,43 @@ button { font: inherit; }
       rgba(255,255,255,0.03) 75%, rgba(255,255,255,0.03) 83.33%,
       rgba(255,255,255,0.14) 83.33%, rgba(255,255,255,0.14) 91.66%,
       rgba(255,255,255,0.03) 91.66%, rgba(255,255,255,0.03) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 680 1050' preserveAspectRatio='none'%3E%3Cdefs%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.09'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3C/defs%3E%3Crect width='680' height='1050' fill='%23215f2d'/%3E%3Crect width='680' height='1050' filter='url(%23n)'/%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='6' stroke-linecap='square'%3E%3Crect x='20' y='20' width='640' height='1010' rx='12'/%3E%3Cline x1='20' y1='525' x2='660' y2='525'/%3E%3Ccircle cx='340' cy='525' r='91.5'/%3E%3Ccircle cx='340' cy='525' r='4' fill='%23ffffff'/%3E%3Crect x='140' y='20' width='400' height='165'/%3E%3Crect x='220' y='20' width='240' height='70'/%3E%3Crect x='290' y='0' width='100' height='20'/%3E%3Ccircle cx='340' cy='130' r='4' fill='%23ffffff'/%3E%3Cpath d='M273.5 185 A 91.5 91.5 0 0 0 406.5 185'/%3E%3Crect x='140' y='865' width='400' height='165'/%3E%3Crect x='220' y='960' width='240' height='70'/%3E%3Crect x='290' y='1030' width='100' height='20'/%3E%3Ccircle cx='340' cy='920' r='4' fill='%23ffffff'/%3E%3Cpath d='M273.5 865 A 91.5 91.5 0 0 1 406.5 865'/%3E%3Cpath d='M20 80 A 60 60 0 0 0 80 20'/%3E%3Cpath d='M660 80 A 60 60 0 0 1 600 20'/%3E%3Cpath d='M20 970 A 60 60 0 0 1 80 1030'/%3E%3Cpath d='M660 970 A 60 60 0 0 0 600 1030'/%3E%3C/g%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 680 1050' preserveAspectRatio='none'%3E%3Cdefs%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.09'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3C/defs%3E%3Crect width='680' height='1050' fill='%23215f2d'/%3E%3Crect width='680' height='1050' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: cover, cover;
   background-repeat: no-repeat;
   background-position: center;
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08);
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Líneas en capa superior estable */
+.pitch::after {
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 680 1050' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='6' stroke-linecap='square'%3E%3Crect x='20' y='20' width='640' height='1010' rx='12'/%3E%3Cline x1='20' y1='525' x2='660' y2='525'/%3E%3Ccircle cx='340' cy='525' r='91.5'/%3E%3Ccircle cx='340' cy='525' r='4' fill='%23ffffff'/%3E%3Crect x='140' y='20' width='400' height='165'/%3E%3Crect x='220' y='20' width='240' height='70'/%3E%3Crect x='290' y='0' width='100' height='20'/%3E%3Ccircle cx='340' cy='130' r='4' fill='%23ffffff'/%3E%3Cpath d='M273.5 185 A 91.5 91.5 0 0 0 406.5 185'/%3E%3Crect x='140' y='865' width='400' height='165'/%3E%3Crect x='220' y='960' width='240' height='70'/%3E%3Crect x='290' y='1030' width='100' height='20'/%3E%3Ccircle cx='340' cy='920' r='4' fill='%23ffffff'/%3E%3Cpath d='M273.5 865 A 91.5 91.5 0 0 1 406.5 865'/%3E%3Cpath d='M20 80 A 60 60 0 0 0 80 20'/%3E%3Cpath d='M660 80 A 60 60 0 0 1 600 20'/%3E%3Cpath d='M20 970 A 60 60 0 0 1 80 1030'/%3E%3Cpath d='M660 970 A 60 60 0 0 0 600 1030'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .player {
   position: absolute;
   left: 0;
   top: 0;
-  transform: translate(-50%, -50%);
+  z-index: 2;
+  transform: translate3d(-50%, -50%, 0);
   user-select: none;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
   background: transparent;
   border: none;
   padding: 0;
   display: block;
+  will-change: transform, left, top;
+  backface-visibility: hidden;
 }
 
 .player img {
@@ -118,7 +162,10 @@ button { font: inherit; }
   object-fit: contain;
   display: block;
   pointer-events: none;
-  filter: drop-shadow(0 7px 10px rgba(0,0,0,0.28));
+  filter: drop-shadow(0 7px 10px rgba(0,0,0,0.22));
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .player.salt {
@@ -132,7 +179,7 @@ button { font: inherit; }
 }
 
 .player.dragging {
-  transform: translate(-50%, -50%) scale(1.05);
+  transform: translate3d(-50%, -50%, 0) scale(1.03);
 }
 
 .number {

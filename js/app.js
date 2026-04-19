@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'futbol-tablero-completo-v1';
+const STORAGE_KEY = 'futbol-tablero-completo-v2';
 
 const pieceAssets = {
   A: 'assets/salt.png',
@@ -37,7 +37,9 @@ const flipBtn = document.getElementById('flipBtn');
 
 let state = loadState();
 let activeDrag = null;
+let rafId = 0;
 
+applyChromeColor();
 renderBoard();
 attachEvents();
 
@@ -75,6 +77,7 @@ function renderBoard() {
     const img = document.createElement('img');
     img.src = pieceAssets[player.team];
     img.alt = player.team === 'A' ? 'Salero' : 'Limón';
+    img.draggable = false;
 
     const badge = document.createElement('span');
     badge.className = 'number';
@@ -96,6 +99,8 @@ function attachEvents() {
   window.addEventListener('pointermove', onPointerMove, { passive: false });
   window.addEventListener('pointerup', onPointerUp);
   window.addEventListener('pointercancel', onPointerUp);
+  window.addEventListener('resize', applyChromeColor);
+  window.addEventListener('orientationchange', applyChromeColor);
 
   resetBtn.addEventListener('click', () => {
     state = cloneDefaults();
@@ -134,13 +139,22 @@ function onPointerDown(event) {
 function onPointerMove(event) {
   if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
   event.preventDefault();
-  updateDraggedPosition(event.clientX, event.clientY);
+
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(() => {
+    updateDraggedPosition(event.clientX, event.clientY);
+    rafId = 0;
+  });
 }
 
 function onPointerUp(event) {
   if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
   activeDrag.element.classList.remove('dragging');
   activeDrag.element.releasePointerCapture?.(event.pointerId);
+  if (rafId) {
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+  }
   saveState();
   activeDrag = null;
 }
@@ -157,6 +171,19 @@ function updateDraggedPosition(clientX, clientY) {
     player.x = round2(x);
     player.y = round2(y);
   }
+}
+
+function applyChromeColor() {
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--chrome-color').trim() || '#143824';
+  let themeColor = document.querySelector('meta[name="theme-color"]');
+  if (!themeColor) {
+    themeColor = document.createElement('meta');
+    themeColor.name = 'theme-color';
+    document.head.appendChild(themeColor);
+  }
+  themeColor.setAttribute('content', color);
+  document.documentElement.style.backgroundColor = color;
+  document.body.style.backgroundColor = color;
 }
 
 function clamp(value, min, max) {
