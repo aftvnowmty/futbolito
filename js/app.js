@@ -61,29 +61,43 @@ const formationCatalog = Object.keys(formations);
 const backgroundCatalog = [
   { id: 'wood', name: 'Mesa de madera' },
   { id: 'coke', name: 'Mesa de cocacola' },
-  { id: 'beer', name: 'Mesa de carta' },
+  { id: 'beer', name: 'Mesa de Carta Blanca' },
 ];
 
-const pitch = document.getElementById('pitch');
-const configBtn = document.getElementById('configBtn');
-const configMenu = document.getElementById('configMenu');
-const formationA = document.getElementById('formationA');
-const formationB = document.getElementById('formationB');
-const visibilityMode = document.getElementById('visibilityMode');
-const backgroundBtn = document.getElementById('backgroundBtn');
-const backgroundLabel = document.getElementById('backgroundLabel');
-const flipBtn = document.getElementById('flipBtn');
-const resetBtn = document.getElementById('resetBtn');
+let pitch;
+let configBtn;
+let configMenu;
+let formationA;
+let formationB;
+let visibilityMode;
+let backgroundBtn;
+let backgroundLabel;
+let flipBtn;
+let resetBtn;
 
 let overlay = null;
 let activeDrag = null;
 let rafId = 0;
+let state = null;
 
-let state = loadState();
-
-init();
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    init();
+  } catch (error) {
+    console.error('Error inicializando app:', error);
+    alert('Error JS: ' + error.message);
+  }
+});
 
 function init() {
+  cacheDom();
+
+  if (!pitch) {
+    throw new Error('No se encontró #pitch');
+  }
+
+  state = loadState();
+
   createOverlay();
   hydrateFormationOptions();
   syncControls();
@@ -92,15 +106,29 @@ function init() {
   attachEvents();
 }
 
+function cacheDom() {
+  pitch = document.getElementById('pitch');
+  configBtn = document.getElementById('configBtn');
+  configMenu = document.getElementById('configMenu');
+  formationA = document.getElementById('formationA');
+  formationB = document.getElementById('formationB');
+  visibilityMode = document.getElementById('visibilityMode');
+  backgroundBtn = document.getElementById('backgroundBtn');
+  backgroundLabel = document.getElementById('backgroundLabel');
+  flipBtn = document.getElementById('flipBtn');
+  resetBtn = document.getElementById('resetBtn');
+}
+
 function createOverlay() {
   overlay = document.createElement('div');
   overlay.className = 'overlay';
   document.body.appendChild(overlay);
-
   overlay.addEventListener('click', closeConfigMenu);
 }
 
 function hydrateFormationOptions() {
+  if (!formationA || !formationB) return;
+
   formationA.innerHTML = '';
   formationB.innerHTML = '';
 
@@ -126,8 +154,8 @@ function buildPlayers(teamAFormation, teamBFormation) {
   return [...teamA, ...teamB];
 }
 
-function formationToPlayers(team, key, invert) {
-  const shape = formations[key];
+function formationToPlayers(team, formationKey, invert) {
+  const shape = formations[formationKey];
   const rows = [];
 
   if (shape.defenders) rows.push({ y: 75, xs: shape.defenders });
@@ -170,7 +198,11 @@ function loadState() {
 
     const parsed = JSON.parse(raw);
 
-    if (!parsed.players || !Array.isArray(parsed.players)) {
+    if (
+      !parsed.players ||
+      !Array.isArray(parsed.players) ||
+      parsed.players.length !== 22
+    ) {
       return cloneDefaults();
     }
 
@@ -192,18 +224,27 @@ function saveState() {
 }
 
 function syncControls() {
-  formationA.value = state.formationA;
-  formationB.value = state.formationB;
+  if (formationA) formationA.value = state.formationA;
+  if (formationB) formationB.value = state.formationB;
+  if (visibilityMode) visibilityMode.value = state.visibilityMode;
 
-  if (visibilityMode) {
-    visibilityMode.value = state.visibilityMode;
+  const bg =
+    backgroundCatalog.find((item) => item.id === state.background) ||
+    backgroundCatalog[0];
+
+  if (backgroundLabel) {
+    backgroundLabel.textContent = bg.name;
   }
+}
 
-  const bg = backgroundCatalog.find((item) => item.id === state.background) || backgroundCatalog[0];
-  backgroundLabel.textContent = bg.name;
+function setPosition(element, x, y) {
+  element.style.left = `${x}%`;
+  element.style.top = `${y}%`;
 }
 
 function renderBoard() {
+  if (!pitch) return;
+
   pitch.querySelectorAll('.player').forEach((node) => node.remove());
 
   state.players
@@ -235,30 +276,34 @@ function renderBoard() {
     });
 }
 
-function setPosition(element, x, y) {
-  element.style.left = `${x}%`;
-  element.style.top = `${y}%`;
-}
-
 function attachEvents() {
-  pitch.addEventListener('pointerdown', onPointerDown);
+  if (pitch) {
+    pitch.addEventListener('pointerdown', onPointerDown);
+  }
+
   window.addEventListener('pointermove', onPointerMove, { passive: false });
   window.addEventListener('pointerup', onPointerUp);
   window.addEventListener('pointercancel', onPointerUp);
 
-  configBtn.addEventListener('click', toggleConfigMenu);
+  if (configBtn) {
+    configBtn.addEventListener('click', toggleConfigMenu);
+  }
 
-  formationA.addEventListener('change', () => {
-    state.formationA = formationA.value;
-    applyFormation('A', state.formationA, false);
-    closeConfigMenu();
-  });
+  if (formationA) {
+    formationA.addEventListener('change', () => {
+      state.formationA = formationA.value;
+      applyFormation('A', state.formationA, false);
+      closeConfigMenu();
+    });
+  }
 
-  formationB.addEventListener('change', () => {
-    state.formationB = formationB.value;
-    applyFormation('B', state.formationB, true);
-    closeConfigMenu();
-  });
+  if (formationB) {
+    formationB.addEventListener('change', () => {
+      state.formationB = formationB.value;
+      applyFormation('B', state.formationB, true);
+      closeConfigMenu();
+    });
+  }
 
   if (visibilityMode) {
     visibilityMode.addEventListener('change', () => {
@@ -269,57 +314,86 @@ function attachEvents() {
     });
   }
 
-  backgroundBtn.addEventListener('click', () => {
-    const currentIndex = backgroundCatalog.findIndex((item) => item.id === state.background);
-    const next = backgroundCatalog[(currentIndex + 1) % backgroundCatalog.length];
+  if (backgroundBtn) {
+    backgroundBtn.addEventListener('click', () => {
+      const currentIndex = backgroundCatalog.findIndex(
+        (item) => item.id === state.background
+      );
+      const next =
+        backgroundCatalog[(currentIndex + 1) % backgroundCatalog.length];
 
-    state.background = next.id;
-    applyBackground(next.id);
-    syncControls();
-    saveState();
-    closeConfigMenu();
-  });
+      state.background = next.id;
+      applyBackground(next.id);
+      syncControls();
+      saveState();
+      closeConfigMenu();
+    });
+  }
 
-  flipBtn.addEventListener('click', () => {
-    state.players = state.players.map((player) => ({
-      ...player,
-      y: 100 - player.y,
-    }));
+  if (flipBtn) {
+    flipBtn.addEventListener('click', () => {
+      state.players = state.players.map((player) => ({
+        ...player,
+        y: 100 - player.y,
+      }));
 
-    renderBoard();
-    saveState();
-    closeConfigMenu();
-  });
+      renderBoard();
+      saveState();
+      closeConfigMenu();
+    });
+  }
 
-  resetBtn.addEventListener('click', () => {
-    state.players = buildPlayers(state.formationA, state.formationB);
-    renderBoard();
-    saveState();
-    closeConfigMenu();
-  });
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      state.players = buildPlayers(state.formationA, state.formationB);
+      renderBoard();
+      saveState();
+      closeConfigMenu();
+    });
+  }
 
   document.addEventListener('click', onDocumentClick);
 }
 
 function toggleConfigMenu(event) {
-  event.stopPropagation();
+  if (event) {
+    event.stopPropagation();
+  }
+
+  if (!configMenu) return;
 
   if (configMenu.hasAttribute('hidden')) {
     configMenu.removeAttribute('hidden');
-    overlay.classList.add('active');
-    configBtn.setAttribute('aria-expanded', 'true');
+
+    if (overlay) {
+      overlay.classList.add('active');
+    }
+
+    if (configBtn) {
+      configBtn.setAttribute('aria-expanded', 'true');
+    }
   } else {
     closeConfigMenu();
   }
 }
 
 function closeConfigMenu() {
-  configMenu.setAttribute('hidden', '');
-  overlay.classList.remove('active');
-  configBtn.setAttribute('aria-expanded', 'false');
+  if (configMenu) {
+    configMenu.setAttribute('hidden', '');
+  }
+
+  if (overlay) {
+    overlay.classList.remove('active');
+  }
+
+  if (configBtn) {
+    configBtn.setAttribute('aria-expanded', 'false');
+  }
 }
 
 function onDocumentClick(event) {
+  if (!configMenu || !configBtn) return;
+
   const clickedInsideMenu = configMenu.contains(event.target);
   const clickedButton = configBtn.contains(event.target);
 
@@ -343,7 +417,7 @@ function applyFormation(team, formationKey, invert) {
 
 function onPointerDown(event) {
   const target = event.target.closest('.player');
-  if (!target) return;
+  if (!target || !pitch) return;
 
   event.preventDefault();
 
@@ -389,6 +463,8 @@ function onPointerUp(event) {
 }
 
 function updateDraggedPosition(clientX, clientY) {
+  if (!activeDrag) return;
+
   const { rect, element, id } = activeDrag;
 
   const x = clamp(((clientX - rect.left) / rect.width) * 100, 4, 96);
@@ -406,6 +482,7 @@ function updateDraggedPosition(clientX, clientY) {
 function applyBackground(backgroundId) {
   let bgVar;
   let chromeColor;
+  let bgPosition = 'center';
 
   switch (backgroundId) {
     case 'coke':
@@ -416,7 +493,7 @@ function applyBackground(backgroundId) {
     case 'beer':
       bgVar = 'var(--beer-bg)';
       chromeColor = '#6e6e6e';
-      bgPosition = 'right 30% center';
+      bgPosition = 'right 20% center';
       break;
 
     case 'wood':
@@ -428,13 +505,13 @@ function applyBackground(backgroundId) {
 
   document.documentElement.style.setProperty('--bg', bgVar);
   document.documentElement.style.setProperty('--chrome-color', chromeColor);
+  document.body.style.backgroundPosition = bgPosition;
 
   updateThemeMeta(chromeColor);
-  document.body.style.backgroundPosition = bgPosition;
+
   document.documentElement.style.backgroundColor = chromeColor;
   document.body.style.backgroundColor = chromeColor;
 }
-
 
 function updateThemeMeta(color) {
   let themeColor = document.querySelector('meta[name="theme-color"]');
