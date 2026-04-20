@@ -493,10 +493,14 @@ function applyBackground(backgroundId) {
     case 'beer':
   bgVar = 'var(--beer-bg)';
   chromeColor = '#6e6e6e';
-  bgPosition = '72% 58%';
-  document.body.style.backgroundSize = 'cover';
+  if (window.matchMedia('(max-width: 768px)').matches) {
+    bgPosition = '72% 60%';
+    document.body.style.backgroundSize = 'cover';
+  } else {
+    bgPosition = '50% 50%';
+    document.body.style.backgroundSize = '115%';
+  }
   break;
-
     case 'wood':
     default:
       bgVar = 'var(--wood-bg)';
