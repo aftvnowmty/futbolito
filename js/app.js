@@ -537,3 +537,15 @@ function clamp(value, min, max) {
 function round2(value) {
   return Math.round(value * 100) / 100;
 }
+const ballCatalog = [
+  { id: '01_telstar_1970', name: 'Telstar 1970', file: 'assets/balls/01_telstar_1970.png' },
+  { id: '02_tango_1978', name: 'Tango 1978', file: 'assets/balls/02_tango_1978.png' },
+  { id: '03_azteca_1986', name: 'Azteca 1986', file: 'assets/balls/03_azteca_1986.png' },
+  { id: '04_etrusco_1990', name: 'Etrusco 1990', file: 'assets/balls/04_etrusco_1990.png' },
+  { id: '05_fevernova_2002', name: 'Fevernova 2002', file: 'assets/balls/05_fevernova_2002.png' },
+  { id: '06_teamgeist_2006', name: 'Teamgeist 2006', file: 'assets/balls/06_teamgeist_2006.png' },
+  { id: '07_jabulani_2010', name: 'Jabulani 2010', file: 'assets/balls/07_jabulani_2010.png' },
+  { id: '08_brazuca_2014', name: 'Brazuca 2014', file: 'assets/balls/08_brazuca_2014.png' },
+  { id: '09_telstar18_2018', name: 'Telstar 18', file: 'assets/balls/09_telstar18_2018.png' },
+  { id: '10_leather_classic', name: 'Cuero clásico', file: 'assets/balls/10_leather_classic.png' },
+];
