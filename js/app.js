@@ -154,10 +154,10 @@ function cloneDefaults() {
     formationA: '4-2-3-1',
     formationB: '4-2-3-1',
     visibilityMode: 'both',
-    players: buildPlayers('4-2-3-1', '4-2-3-1'),
     ballId: '01_telstar_1970',
-ballX: 50,
-ballY: 50,
+    ballX: 50,
+    ballY: 50,
+    players: buildPlayers('4-2-3-1', '4-2-3-1'),
   };
 }
 
@@ -224,7 +224,12 @@ function loadState() {
       formationA: parsed.formationA || '4-2-3-1',
       formationB: parsed.formationB || '4-2-3-1',
       visibilityMode: parsed.visibilityMode || 'both',
-      players: parsed.players.map((player) => ({ ...player })),
+      ballId: parsed.ballId || '01_telstar_1970',
+      ballX: typeof parsed.ballX === 'number' ? parsed.ballX : 50,
+      ballY: typeof parsed.ballY === 'number' ? parsed.ballY : 50,
+      players: parsed.players.map((player) => ({
+        ...player,
+      })),
     };
   } catch (error) {
     console.error('Error cargando estado:', error);
