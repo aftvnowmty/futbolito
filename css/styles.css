@@ -1,7 +1,7 @@
 :root {
   --wood-bg: url("../assets/wood-texture.png");
   --coke-bg: url("../assets/coke-texture.png");
-  --beer-bg: url("../assets/beer-bg.png");
+  --beer-bg: url("../assets/beer-texture.png");
 
   --bg: var(--wood-bg);
   --chrome-color: #6b3f20;
