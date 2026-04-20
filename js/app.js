@@ -261,7 +261,6 @@ function setPosition(element, x, y) {
 }
 
 function renderBoard() {
-  renderBallOnPitch();
   if (!pitch) return;
 
   pitch.querySelectorAll('.player').forEach((node) => node.remove());
@@ -293,6 +292,8 @@ function renderBoard() {
       setPosition(piece, player.x, player.y);
       pitch.appendChild(piece);
     });
+
+  renderBallOnPitch();
 }
 
 function attachEvents() {
