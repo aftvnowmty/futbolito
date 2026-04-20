@@ -53,8 +53,8 @@ body::after {
   content: "";
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.45));
-  z-index: -1;
+  pointer-events: none;
+  background: rgba(0,0,0,0.22);
 }
 
 button, select { font: inherit; }
@@ -505,7 +505,11 @@ button, select { font: inherit; }
     bottom: 82px;
     width: min(300px, calc(100vw - 20px));
   }
-
+@media (min-width: 769px) {
+  body::after {
+    background: rgba(0,0,0,0.34);
+  }
+}
   .clipboard-base {
     padding: 18px 10px 10px;
   }
