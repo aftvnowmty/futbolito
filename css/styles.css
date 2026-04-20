@@ -676,3 +676,49 @@ button, select { font: inherit; }
     transform: scale(1.05);
   }
 }
+
+@media (min-width: 1024px) {
+  .app-shell {
+    width: min(1200px, 100%);
+    padding-top: 18px;
+    padding-bottom: 40px;
+  }
+
+  .topbar {
+    max-width: 980px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 18px;
+  }
+
+  .board-scene {
+    margin-top: 10px;
+  }
+
+  .clipboard-scene {
+    width: min(760px, 72vw);
+  }
+
+  .clipboard-base {
+    padding: 20px 16px 16px;
+    border-radius: 30px;
+  }
+
+  .clipboard-stack {
+    padding-top: 18px;
+  }
+
+  .sheet {
+    width: calc(100% - 42px);
+  }
+
+  .top-sheet {
+    padding: 12px;
+  }
+
+  .clipboard-clip {
+    width: 150px;
+    height: 62px;
+    top: 4px;
+  }
+}
