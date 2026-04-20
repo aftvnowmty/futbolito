@@ -192,8 +192,7 @@ button, select { font: inherit; }
 }
 
 .clipboard-scene {
-  width: min(840px, 100%);
-  padding-inline: 10px;
+  width: min(720px, 92vw);
 }
 
 .clipboard-base {
