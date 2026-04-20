@@ -1,3 +1,8 @@
+let ballCarousel;
+let ballCaption;
+let ballPrev;
+let ballNext;
+
 const STORAGE_KEY = 'futbol-tablero-clipboard-v2';
 
 const pieceAssets = {
@@ -104,9 +109,14 @@ function init() {
   applyBackground(state.background);
   renderBoard();
   attachEvents();
+  renderBallCarousel();
 }
 
 function cacheDom() {
+  ballCarousel = document.getElementById('ballCarousel');
+ballCaption = document.getElementById('ballCaption');
+ballPrev = document.getElementById('ballPrev');
+ballNext = document.getElementById('ballNext');
   pitch = document.getElementById('pitch');
   configBtn = document.getElementById('configBtn');
   configMenu = document.getElementById('configMenu');
@@ -145,6 +155,9 @@ function cloneDefaults() {
     formationB: '4-2-3-1',
     visibilityMode: 'both',
     players: buildPlayers('4-2-3-1', '4-2-3-1'),
+    ballId: '01_telstar_1970',
+ballX: 50,
+ballY: 50,
   };
 }
 
@@ -243,6 +256,7 @@ function setPosition(element, x, y) {
 }
 
 function renderBoard() {
+  renderBallOnPitch();
   if (!pitch) return;
 
   pitch.querySelectorAll('.player').forEach((node) => node.remove());
@@ -277,6 +291,17 @@ function renderBoard() {
 }
 
 function attachEvents() {
+  if (ballPrev) {
+  ballPrev.addEventListener('click', () => {
+    stepBall(-1);
+  });
+}
+
+if (ballNext) {
+  ballNext.addEventListener('click', () => {
+    stepBall(1);
+  });
+}
   if (pitch) {
     pitch.addEventListener('pointerdown', onPointerDown);
   }
@@ -549,3 +574,112 @@ const ballCatalog = [
   { id: '09_telstar18_2018', name: 'Telstar 18', file: 'assets/balls/09_telstar18_2018.png' },
   { id: '10_leather_classic', name: 'Cuero clásico', file: 'assets/balls/10_leather_classic.png' },
 ];
+function renderBallCarousel() {
+  if (!ballCarousel) return;
+
+  ballCarousel.innerHTML = '';
+
+  ballCatalog.forEach((ball) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ball-slide';
+    btn.dataset.ballId = ball.id;
+    btn.setAttribute('aria-label', ball.name);
+
+    if (ball.id === state.ballId) {
+      btn.classList.add('active');
+    }
+
+    const img = document.createElement('img');
+    img.src = ball.file;
+    img.alt = ball.name;
+
+    btn.appendChild(img);
+
+    btn.addEventListener('click', () => {
+      state.ballId = ball.id;
+      renderBallCarousel();
+      renderBoard();
+      saveState();
+    });
+
+    ballCarousel.appendChild(btn);
+  });
+
+  updateBallCaption();
+  centerActiveBallSlide();
+}
+
+function updateBallCaption() {
+  if (!ballCaption) return;
+  const current = ballCatalog.find((b) => b.id === state.ballId) || ballCatalog[0];
+  ballCaption.textContent = current.name;
+}
+
+function centerActiveBallSlide() {
+  if (!ballCarousel) return;
+  const active = ballCarousel.querySelector('.ball-slide.active');
+  if (!active) return;
+
+  const left =
+    active.offsetLeft - (ballCarousel.clientWidth / 2) + (active.clientWidth / 2);
+
+  ballCarousel.scrollTo({
+    left,
+    behavior: 'smooth',
+  });
+}
+
+function stepBall(direction) {
+  const index = ballCatalog.findIndex((b) => b.id === state.ballId);
+  const nextIndex = (index + direction + ballCatalog.length) % ballCatalog.length;
+  state.ballId = ballCatalog[nextIndex].id;
+  renderBallCarousel();
+  renderBoard();
+  saveState();
+}
+function renderBallOnPitch() {
+  if (!pitch) return;
+
+  const oldBall = pitch.querySelector('.match-ball');
+  if (oldBall) oldBall.remove();
+
+  const selectedBall = ballCatalog.find((b) => b.id === state.ballId) || ballCatalog[0];
+
+  const ball = document.createElement('button');
+  ball.type = 'button';
+  ball.className = 'player match-ball';
+  ball.dataset.id = 'match-ball';
+  ball.setAttribute('aria-label', 'Balón');
+
+  const img = document.createElement('img');
+  img.src = selectedBall.file;
+  img.alt = selectedBall.name;
+  img.draggable = false;
+
+  ball.appendChild(img);
+  setPosition(ball, state.ballX, state.ballY);
+  pitch.appendChild(ball);
+}
+function updateDraggedPosition(clientX, clientY) {
+  if (!activeDrag) return;
+
+  const { rect, element, id } = activeDrag;
+
+  const x = clamp(((clientX - rect.left) / rect.width) * 100, 4, 96);
+  const y = clamp(((clientY - rect.top) / rect.height) * 100, 3, 97);
+
+  setPosition(element, x, y);
+
+  if (id === 'match-ball') {
+    state.ballX = round2(x);
+    state.ballY = round2(y);
+    return;
+  }
+
+  const player = state.players.find((item) => item.id === id);
+  if (player) {
+    player.x = round2(x);
+    player.y = round2(y);
+  }
+}
