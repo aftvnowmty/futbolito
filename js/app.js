@@ -69,6 +69,8 @@ const backgroundCatalog = [
   { id: 'beer', name: 'Mesa de Carta Blanca' },
 ];
 
+let ballCatalog = [];
+
 let pitch;
 let configBtn;
 let configMenu;
@@ -85,38 +87,42 @@ let activeDrag = null;
 let rafId = 0;
 let state = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    init();
+    await init();
   } catch (error) {
     console.error('Error inicializando app:', error);
     alert('Error JS: ' + error.message);
   }
 });
 
-function init() {
+async function init() {
   cacheDom();
 
   if (!pitch) {
     throw new Error('No se encontró #pitch');
   }
 
+  await loadBallCatalog();
+
   state = loadState();
+  normalizeBallState();
 
   createOverlay();
   hydrateFormationOptions();
   syncControls();
   applyBackground(state.background);
+  renderBallCarousel();
   renderBoard();
   attachEvents();
-  renderBallCarousel();
 }
 
 function cacheDom() {
   ballCarousel = document.getElementById('ballCarousel');
-ballCaption = document.getElementById('ballCaption');
-ballPrev = document.getElementById('ballPrev');
-ballNext = document.getElementById('ballNext');
+  ballCaption = document.getElementById('ballCaption');
+  ballPrev = document.getElementById('ballPrev');
+  ballNext = document.getElementById('ballNext');
+
   pitch = document.getElementById('pitch');
   configBtn = document.getElementById('configBtn');
   configMenu = document.getElementById('configMenu');
@@ -127,6 +133,49 @@ ballNext = document.getElementById('ballNext');
   backgroundLabel = document.getElementById('backgroundLabel');
   flipBtn = document.getElementById('flipBtn');
   resetBtn = document.getElementById('resetBtn');
+}
+
+async function loadBallCatalog() {
+  const response = await fetch('assets/balls/balls.json?v=1', {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error('No se pudo cargar assets/balls/balls.json');
+  }
+
+  const data = await response.json();
+
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('El catálogo de balones está vacío o inválido');
+  }
+
+  ballCatalog = data
+    .map((item) => ({
+      id: String(item.id || '').trim(),
+      name: String(item.name || '').trim(),
+      file: String(item.file || '').trim(),
+    }))
+    .filter((item) => item.id && item.name && item.file);
+
+  if (!ballCatalog.length) {
+    throw new Error('No hay balones válidos en balls.json');
+  }
+}
+
+function getDefaultBallId() {
+  return ballCatalog.length ? ballCatalog[0].id : null;
+}
+
+function normalizeBallState() {
+  const validIds = new Set(ballCatalog.map((ball) => ball.id));
+
+  if (!state.ballId || !validIds.has(state.ballId)) {
+    state.ballId = getDefaultBallId();
+  }
+
+  if (typeof state.ballX !== 'number') state.ballX = 50;
+  if (typeof state.ballY !== 'number') state.ballY = 50;
 }
 
 function createOverlay() {
@@ -154,7 +203,7 @@ function cloneDefaults() {
     formationA: '4-2-3-1',
     formationB: '4-2-3-1',
     visibilityMode: 'both',
-    ballId: '01_telstar_1970',
+    ballId: null,
     ballX: 50,
     ballY: 50,
     players: buildPlayers('4-2-3-1', '4-2-3-1'),
@@ -224,7 +273,7 @@ function loadState() {
       formationA: parsed.formationA || '4-2-3-1',
       formationB: parsed.formationB || '4-2-3-1',
       visibilityMode: parsed.visibilityMode || 'both',
-      ballId: parsed.ballId || '01_telstar_1970',
+      ballId: parsed.ballId || null,
       ballX: typeof parsed.ballX === 'number' ? parsed.ballX : 50,
       ballY: typeof parsed.ballY === 'number' ? parsed.ballY : 50,
       players: parsed.players.map((player) => ({
@@ -298,16 +347,17 @@ function renderBoard() {
 
 function attachEvents() {
   if (ballPrev) {
-  ballPrev.addEventListener('click', () => {
-    stepBall(-1);
-  });
-}
+    ballPrev.addEventListener('click', () => {
+      stepBall(-1);
+    });
+  }
 
-if (ballNext) {
-  ballNext.addEventListener('click', () => {
-    stepBall(1);
-  });
-}
+  if (ballNext) {
+    ballNext.addEventListener('click', () => {
+      stepBall(1);
+    });
+  }
+
   if (pitch) {
     pitch.addEventListener('pointerdown', onPointerDown);
   }
@@ -368,6 +418,8 @@ if (ballNext) {
         y: 100 - player.y,
       }));
 
+      state.ballY = 100 - state.ballY;
+
       renderBoard();
       saveState();
       closeConfigMenu();
@@ -377,6 +429,8 @@ if (ballNext) {
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       state.players = buildPlayers(state.formationA, state.formationB);
+      state.ballX = 50;
+      state.ballY = 50;
       renderBoard();
       saveState();
       closeConfigMenu();
@@ -384,6 +438,12 @@ if (ballNext) {
   }
 
   document.addEventListener('click', onDocumentClick);
+
+  window.addEventListener('resize', () => {
+    if (state) {
+      applyBackground(state.background);
+    }
+  });
 }
 
 function toggleConfigMenu(event) {
@@ -503,6 +563,12 @@ function updateDraggedPosition(clientX, clientY) {
 
   setPosition(element, x, y);
 
+  if (id === 'match-ball') {
+    state.ballX = round2(x);
+    state.ballY = round2(y);
+    return;
+  }
+
   const player = state.players.find((item) => item.id === id);
   if (player) {
     player.x = round2(x);
@@ -519,29 +585,34 @@ function applyBackground(backgroundId) {
     case 'coke':
       bgVar = 'var(--coke-bg)';
       chromeColor = '#8d0d18';
+      document.body.style.backgroundSize = 'cover';
       break;
 
     case 'beer':
-  bgVar = 'var(--beer-bg)';
-  chromeColor = '#6e6e6e';
-  if (window.matchMedia('(max-width: 768px)').matches) {
-    bgPosition = '72% 60%';
-    document.body.style.backgroundSize = 'cover';
-  } else {
-    bgPosition = '50% 50%';
-    document.body.style.backgroundSize = '115%';
-  }
-  break;
+      bgVar = 'var(--beer-bg)';
+      chromeColor = '#6e6e6e';
+
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        bgPosition = '72% 60%';
+        document.body.style.backgroundSize = 'cover';
+      } else {
+        bgPosition = '50% 50%';
+        document.body.style.backgroundSize = '115%';
+      }
+      break;
+
     case 'wood':
     default:
       bgVar = 'var(--wood-bg)';
       chromeColor = '#6b3f20';
+      document.body.style.backgroundSize = 'cover';
       break;
   }
 
   document.documentElement.style.setProperty('--bg', bgVar);
   document.documentElement.style.setProperty('--chrome-color', chromeColor);
   document.body.style.backgroundPosition = bgPosition;
+  document.body.style.backgroundRepeat = 'no-repeat';
 
   updateThemeMeta(chromeColor);
 
@@ -568,20 +639,9 @@ function clamp(value, min, max) {
 function round2(value) {
   return Math.round(value * 100) / 100;
 }
-const ballCatalog = [
-  { id: '01_telstar_1970', name: 'Telstar 1970', file: 'assets/balls/01_telstar_1970.png' },
-  { id: '02_tango_1978', name: 'Tango 1978', file: 'assets/balls/02_tango_1978.png' },
-  { id: '03_azteca_1986', name: 'Azteca 1986', file: 'assets/balls/03_azteca_1986.png' },
-  { id: '04_etrusco_1990', name: 'Etrusco 1990', file: 'assets/balls/04_etrusco_1990.png' },
-  { id: '05_fevernova_2002', name: 'Fevernova 2002', file: 'assets/balls/05_fevernova_2002.png' },
-  { id: '06_teamgeist_2006', name: 'Teamgeist 2006', file: 'assets/balls/06_teamgeist_2006.png' },
-  { id: '07_jabulani_2010', name: 'Jabulani 2010', file: 'assets/balls/07_jabulani_2010.png' },
-  { id: '08_brazuca_2014', name: 'Brazuca 2014', file: 'assets/balls/08_brazuca_2014.png' },
-  { id: '09_telstar18_2018', name: 'Telstar 18', file: 'assets/balls/09_telstar18_2018.png' },
-  { id: '10_leather_classic', name: 'Cuero clásico', file: 'assets/balls/10_leather_classic.png' },
-];
+
 function renderBallCarousel() {
-  if (!ballCarousel) return;
+  if (!ballCarousel || !ballCatalog.length) return;
 
   ballCarousel.innerHTML = '';
 
@@ -599,6 +659,7 @@ function renderBallCarousel() {
     const img = document.createElement('img');
     img.src = ball.file;
     img.alt = ball.name;
+    img.draggable = false;
 
     btn.appendChild(img);
 
@@ -617,13 +678,15 @@ function renderBallCarousel() {
 }
 
 function updateBallCaption() {
-  if (!ballCaption) return;
+  if (!ballCaption || !ballCatalog.length) return;
+
   const current = ballCatalog.find((b) => b.id === state.ballId) || ballCatalog[0];
   ballCaption.textContent = current.name;
 }
 
 function centerActiveBallSlide() {
   if (!ballCarousel) return;
+
   const active = ballCarousel.querySelector('.ball-slide.active');
   if (!active) return;
 
@@ -637,15 +700,20 @@ function centerActiveBallSlide() {
 }
 
 function stepBall(direction) {
+  if (!ballCatalog.length) return;
+
   const index = ballCatalog.findIndex((b) => b.id === state.ballId);
-  const nextIndex = (index + direction + ballCatalog.length) % ballCatalog.length;
+  const safeIndex = index >= 0 ? index : 0;
+  const nextIndex = (safeIndex + direction + ballCatalog.length) % ballCatalog.length;
+
   state.ballId = ballCatalog[nextIndex].id;
   renderBallCarousel();
   renderBoard();
   saveState();
 }
+
 function renderBallOnPitch() {
-  if (!pitch) return;
+  if (!pitch || !ballCatalog.length || !state.ballId) return;
 
   const oldBall = pitch.querySelector('.match-ball');
   if (oldBall) oldBall.remove();
@@ -666,26 +734,4 @@ function renderBallOnPitch() {
   ball.appendChild(img);
   setPosition(ball, state.ballX, state.ballY);
   pitch.appendChild(ball);
-}
-function updateDraggedPosition(clientX, clientY) {
-  if (!activeDrag) return;
-
-  const { rect, element, id } = activeDrag;
-
-  const x = clamp(((clientX - rect.left) / rect.width) * 100, 4, 96);
-  const y = clamp(((clientY - rect.top) / rect.height) * 100, 3, 97);
-
-  setPosition(element, x, y);
-
-  if (id === 'match-ball') {
-    state.ballX = round2(x);
-    state.ballY = round2(y);
-    return;
-  }
-
-  const player = state.players.find((item) => item.id === id);
-  if (player) {
-    player.x = round2(x);
-    player.y = round2(y);
-  }
 }
